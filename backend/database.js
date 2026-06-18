@@ -1,13 +1,18 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
-const pool = new Pool({
-  host:     process.env.PGHOST     || 'localhost',
-  port:     parseInt(process.env.PGPORT) || 5432,
-  database: process.env.PGDATABASE || 'restaurant_db',
-  user:     process.env.PGUSER     || 'postgres',
-  password: process.env.PGPASSWORD,
-});
+const pool = process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    })
+  : new Pool({
+      host:     process.env.PGHOST,
+      port:     process.env.PGPORT,
+      database: process.env.PGDATABASE,
+      user:     process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+    });
 
 async function initializeDatabase() {
   await pool.query(`
