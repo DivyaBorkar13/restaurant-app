@@ -4,6 +4,18 @@ A full-stack, real-time restaurant order management system built for Indian rest
 
 ---
 
+## 🌐 Live Demo
+
+| Interface | Link |
+|-----------|------|
+| 🛒 Customer Menu | [restaurant-app-production-d560.up.railway.app](https://restaurant-app-production-d560.up.railway.app) |
+| 👨‍🍳 Kitchen Display | [/kitchen](https://restaurant-app-production-d560.up.railway.app/kitchen) |
+| 🔐 Admin Dashboard | [/admin](https://restaurant-app-production-d560.up.railway.app/admin) |
+
+> **Admin login:** username `admin` · password `admin123`
+
+---
+
 ## 🖥️ Interfaces
 
 | Interface | URL | Description |
