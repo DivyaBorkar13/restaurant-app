@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitchen Display — Spice Garden</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0d14;
+      --surface:   #131320;
+      --card:      #0a0a12;
+      --border:    #1e1e32;
+      --text:      #e4ddd5;
+      --muted:     #6b6585;
+      --new:       #fbbf24;
+      --preparing: #f97316;
+      --ready:     #22c55e;
+      --served:    #818cf8;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg); color: var(--text);
+      display: flex; flex-direction: column;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      padding: .9rem 1.75rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .kitchen-logo { display: flex; align-items: center; gap: .75rem; }
+    .kitchen-logo span { font-size: 1.6rem; }
+    .kitchen-logo h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: .02em; }
+    .kitchen-logo p  { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+    .header-right { display: flex; align-items: center; gap: 1.2rem; }
+
+    .live-pill {
+      display: flex; align-items: center; gap: .45rem;
+      background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25);
+      padding: .35rem .85rem; border-radius: 50px;
+      font-size: .75rem; font-weight: 600; color: #22c55e;
+    }
+    .live-dot {
+      width: 7px; height: 7px; background: #22c55e; border-radius: 50%;
+      animation: livePulse 1.8s ease-in-out infinite;
+    }
+    @keyframes livePulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+
+    #clock { font-size: 1.1rem; font-weight: 700; color: var(--new); font-variant-numeric: tabular-nums; }
+
+    .total-badge {
+      background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.25);
+      padding: .3rem .8rem; border-radius: 50px;
+      font-size: .78rem; color: var(--new);
+    }
+
+    /* ── Kanban Board ────────────────────────────────────── */
+    .kanban {
+      flex: 1; overflow: hidden;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1.2rem; padding: 1.2rem;
+    }
+
+    .column {
+      background: var(--surface);
+      border-radius: 14px; border: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    .col-head {
+      padding: .9rem 1.1rem;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid var(--border);
+      flex-shrink: 0;
+    }
+    .col-title {
+      display: flex; align-items: center; gap: .55rem;
+      font-size: .85rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+    }
+    .col-indicator { width: 10px; height: 10px; border-radius: 50%; }
+    .col-new     .col-indicator { background: var(--new); box-shadow: 0 0 8px var(--new); }
+    .col-preparing .col-indicator { background: var(--preparing); box-shadow: 0 0 8px var(--preparing); }
+    .col-ready   .col-indicator { background: var(--ready); box-shadow: 0 0 8px var(--ready); }
+
+    .col-new     .col-title { color: var(--new); }
+    .col-preparing .col-title { color: var(--preparing); }
+    .col-ready   .col-title { color: var(--ready); }
+
+    .col-counter {
+      background: rgba(255,255,255,.07);
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .78rem; font-weight: 700;
+    }
+
+    .col-body {
+      flex: 1; overflow-y: auto;
+      padding: .85rem;
+      display: flex; flex-direction: column; gap: .75rem;
+    }
+    .col-body::-webkit-scrollbar { width: 3px; }
+    .col-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .col-empty {
+      text-align: center; padding: 2.5rem 1rem;
+      color: var(--muted); font-size: .82rem;
+    }
+    .col-empty-icon { font-size: 2rem; margin-bottom: .6rem; opacity: .6; }
+
+    /* ── Order Cards ─────────────────────────────────────── */
+    .order-card {
+      background: var(--card);
+      border-radius: 12px;
+      border-left: 4px solid;
+      padding: 1rem;
+      animation: cardIn .3s ease;
+      transition: opacity .3s;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card-new      { border-left-color: var(--new); }
+    .card-preparing{ border-left-color: var(--preparing); }
+    .card-ready    { border-left-color: var(--ready); }
+
+    .card-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: .6rem;
+    }
+    .order-num { font-weight: 700; font-size: .95rem; }
+    .table-tag {
+      background: rgba(255,255,255,.07);
+      padding: .18rem .65rem; border-radius: 50px;
+      font-size: .75rem; font-weight: 600;
+    }
+
+    .order-ts { font-size: .72rem; color: var(--muted); margin-bottom: .65rem; }
+
+    .items-list { margin-bottom: .75rem; }
+    .order-item {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: .82rem; padding: .22rem 0;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .order-item:last-child { border-bottom: none; }
+    .item-n { color: #ccc4bb; }
+    .item-q {
+      background: rgba(255,255,255,.09);
+      padding: .1rem .45rem; border-radius: 4px;
+      font-size: .72rem; font-weight: 700;
+    }
+
+    .order-amount {
+      font-size: .78rem; color: var(--new); font-weight: 600;
+      margin-bottom: .75rem;
+    }
+
+    .card-actions { display: flex; gap: .5rem; }
+    .act-btn {
+      flex: 1; padding: .48rem .5rem;
+      border: 1px solid; border-radius: 8px;
+      font-size: .78rem; font-weight: 600;
+      cursor: pointer; transition: all .15s;
+      font-family: 'Inter', sans-serif;
+      text-align: center;
+    }
+
+    .btn-prepare {
+      color: var(--preparing);
+      border-color: rgba(249,115,22,.3);
+      background: rgba(249,115,22,.1);
+    }
+    .btn-prepare:hover { background: rgba(249,115,22,.22); }
+
+    .btn-ready {
+      color: var(--ready);
+      border-color: rgba(34,197,94,.3);
+      background: rgba(34,197,94,.1);
+    }
+    .btn-ready:hover { background: rgba(34,197,94,.22); }
+
+    .btn-served {
+      color: var(--served);
+      border-color: rgba(129,140,248,.3);
+      background: rgba(129,140,248,.1);
+    }
+    .btn-served:hover { background: rgba(129,140,248,.22); }
+
+    /* ── Toast ───────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+      background: #1e1e32; border: 1px solid var(--border);
+      padding: .7rem 1.4rem; border-radius: 50px;
+      font-size: .85rem; font-weight: 500;
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s; z-index: 999;
+    }
+    #toast.show { opacity: 1; }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .kanban { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .kanban { grid-template-columns: 1fr; height: auto; overflow: visible; }
+      body { height: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<header>
+  <div class="kitchen-logo">
+    <span>👨‍🍳</span>
+    <div>
+      <h1>Kitchen Display</h1>
+      <p>Spice Garden</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="total-badge" id="total-badge">0 active orders</div>
+    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+    <div id="clock">00:00:00</div>
+  </div>
+</header>
+
+<!-- ── Kanban Board ─────────────────────────────────────────── -->
+<div class="kanban">
+
+  <div class="column col-new">
+    <div class="col-head">
+      <div class="col-title"><div class="col-indicator"></div>New Orders</div>
+      <div class="col-counter" id="cnt-new">0</div>
+    </div>
+    <div class="col-body" id="col-new"></div>
+  </div>
+
+  <div class="column col-preparing">
+    <div class="col-head">
+      <div class="col-title"><div class="col-indicator"></div>Preparing</div>
+      <div class="col-counter" id="cnt-preparing">0</div>
+    </div>
+    <div class="col-body" id="col-preparing"></div>
+  </div>
+
+  <div class="column col-ready">
+    <div class="col-head">
+      <div class="col-title"><div class="col-indicator"></div>Ready</div>
+      <div class="col-counter" id="cnt-ready">0</div>
+    </div>
+    <div class="col-body" id="col-ready"></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+/* ── state ─────────────────────────────────────────────────── */
+let orders = {}; // { [id]: order }
+const socket = io();
+
+/* ── clock ─────────────────────────────────────────────────── */
+function tickClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('en-IN', { hour12: false });
+}
+setInterval(tickClock, 1000);
+tickClock();
+
+/* ── toast ─────────────────────────────────────────────────── */
+let toastTimer;
+function toast(msg, icon = '✓') {
+  const el = document.getElementById('toast');
+  el.textContent = `${icon} ${msg}`;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+/* ── fetch all orders ──────────────────────────────────────── */
+async function loadOrders() {
+  try {
+    const res  = await fetch('/api/orders');
+    const data = await res.json();
+    orders = {};
+    for (const o of data.data) {
+      if (o.status !== 'served') orders[o.id] = o;
+    }
+    render();
+  } catch (e) {
+    console.error('Failed to load orders', e);
+  }
+}
+
+/* ── render all columns ────────────────────────────────────── */
+function render() {
+  const active = Object.values(orders);
+  document.getElementById('total-badge').textContent =
+    `${active.length} active order${active.length !== 1 ? 's' : ''}`;
+
+  renderCol('new',       'col-new',       'cnt-new');
+  renderCol('preparing', 'col-preparing', 'cnt-preparing');
+  renderCol('ready',     'col-ready',     'cnt-ready');
+}
+
+function renderCol(status, colId, cntId) {
+  const col  = document.getElementById(colId);
+  const cnt  = document.getElementById(cntId);
+  const list = Object.values(orders)
+    .filter(o => o.status === status)
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+  cnt.textContent = list.length;
+
+  if (!list.length) {
+    const icons = { new:'✨', preparing:'👨‍🍳', ready:'✅' };
+    const msgs  = { new:'No new orders', preparing:'Nothing cooking', ready:'Nothing plated' };
+    col.innerHTML = `
+      <div class="col-empty">
+        <div class="col-empty-icon">${icons[status]}</div>
+        <p>${msgs[status]}</p>
+      </div>`;
+    return;
+  }
+  col.innerHTML = list.map(cardHTML).join('');
+}
+
+/* ── card markup ───────────────────────────────────────────── */
+function cardHTML(o) {
+  const cls  = { new:'card-new', preparing:'card-preparing', ready:'card-ready' }[o.status];
+  const ago  = timeAgo(o.created_at);
+  const items = (o.items || [])
+    .map(i => `<div class="order-item"><span class="item-n">${i.item_name}</span><span class="item-q">×${i.quantity}</span></div>`)
+    .join('');
+
+  let actions = '';
+  if (o.status === 'new')
+    actions = `<button class="act-btn btn-prepare" onclick="setStatus(${o.id},'preparing')">🍳 Start Preparing</button>`;
+  else if (o.status === 'preparing')
+    actions = `<button class="act-btn btn-ready" onclick="setStatus(${o.id},'ready')">✅ Mark Ready</button>`;
+  else if (o.status === 'ready')
+    actions = `<button class="act-btn btn-served" onclick="setStatus(${o.id},'served')">🤝 Served</button>`;
+
+  return `
+    <div class="order-card ${cls}" id="oc-${o.id}">
+      <div class="card-meta">
+        <span class="order-num">Order #${o.id}</span>
+        <span class="table-tag">Table ${o.table_number}</span>
+      </div>
+      <div class="order-ts">⏱ ${ago}</div>
+      <div class="items-list">${items}</div>
+      <div class="order-amount">₹${o.total_amount}</div>
+      <div class="card-actions">${actions}</div>
+    </div>`;
+}
+
+/* ── update status ─────────────────────────────────────────── */
+async function setStatus(id, status) {
+  const card = document.getElementById(`oc-${id}`);
+  if (card) card.style.opacity = '.5';
+
+  try {
+    const res  = await fetch(`/api/orders/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (status === 'served') {
+        delete orders[id];
+        toast(`Order #${id} marked as served`);
+      } else {
+        orders[id] = data.data;
+        toast(`Order #${id} → ${status}`);
+      }
+      render();
+    }
+  } catch {
+    if (card) card.style.opacity = '1';
+    toast('Failed to update status', '⚠');
+  }
+}
+
+/* ── time helper ───────────────────────────────────────────── */
+function timeAgo(dt) {
+  const s = Math.floor((Date.now() - new Date(dt).getTime()) / 1000);
+  if (s < 60)   return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s ago`;
+  return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
+}
+
+/* ── re-render time labels every 15s ──────────────────────── */
+setInterval(render, 15000);
+
+/* ── socket events ─────────────────────────────────────────── */
+socket.on('new-order', order => {
+  orders[order.id] = order;
+  render();
+  toast(`New order #${order.id} — Table ${order.table_number}`, '🔔');
+});
+
+socket.on('order-status-update', ({ id, status, order }) => {
+  if (status === 'served') delete orders[id];
+  else                      orders[id] = order;
+  render();
+});
+
+/* ── init ──────────────────────────────────────────────────── */
+loadOrders();
+</script>
+</body>
+</html>
